@@ -1,0 +1,133 @@
+# Activity Logger - Update Notes
+
+## Latest Updates
+
+### ✅ Keystroke Capture Added
+- **Client now logs actual keystrokes** in order with timestamps
+- Each key press is recorded with the key and timestamp
+- Keystrokes are sent in batches every 5 seconds with the key_count event
+
+### ✅ Top Applications Display Improved
+- **Dashboard now shows top applications** by process name (chrome.exe, code.exe, etc.)
+- Shows both applications AND domains from URLs
+- Applications are prioritized in the "Top Domains/Apps" section
+
+### ✅ Dashboard Enhancements
+- Keystroke sequences now visible in Recent Events
+- Shows: "Keys: h e l l o space w o r l d"
+- Application names displayed prominently alongside domains
+
+## What You'll See Now
+
+### In Dashboard - Recent Events:
+```
+key_count  |  DESKTOP-ABC
+5 keys pressed
+Keys: h e l l o
+```
+
+### In Dashboard - Top Domains/Apps:
+```
+chrome.exe          125
+code.exe            87
+explorer.exe        42
+youtube.com         38
+github.com          22
+```
+
+## Updated Files
+
+**Client (ActivityLogger.exe):**
+- Captures actual keystrokes with timestamps
+- Sends keystroke array with each key_count event
+- Located in: `dist\ActivityLogger.exe`
+
+**Server (ActivityLoggerServer.exe):**
+- Updated `/api/dashboard/top_domains` endpoint
+- Now returns both apps and domains
+- Shows keystrokes in event details
+- Located in: `dist\ActivityLoggerServer.exe`
+
+## Deployment
+
+### To Update Client:
+1. Stop current ActivityLogger.exe (close via tray or Task Manager)
+2. Copy new `dist\ActivityLogger.exe` to `ActivityLogger_Deploy\`
+3. Restart the application
+
+### To Update Server:
+1. Stop current ActivityLoggerServer.exe
+2. Copy new `dist\ActivityLoggerServer.exe` to `ActivityLoggerServer_Deploy\`
+3. Restart the server
+
+### Clear Database (Optional):
+If you want to start fresh with the new keystroke data:
+```powershell
+# Stop server first
+Remove-Item "ActivityLoggerServer_Deploy\activity_logs.db"
+# Start server - new database will be created
+```
+
+## Privacy Note
+
+⚠️ **WARNING: This version logs actual keystrokes!**
+
+The previous version only logged keystroke COUNTS (safe for privacy).
+This version logs the actual keys pressed in sequence.
+
+**Security Recommendations:**
+1. ✅ Use strong AUTH_KEY
+2. ✅ Restrict server access to trusted network
+3. ✅ Consider data encryption
+4. ✅ Regularly review logged data
+5. ✅ Inform users they are being monitored
+
+**Data Collected:**
+- Exact keys pressed (a, b, c, space, enter, etc.)
+- Timestamp of each keystroke
+- Application context (what app was active)
+
+## Sample Data Format
+
+```json
+{
+  "type": "key_count",
+  "timestamp": "2025-10-13T14:23:45.123Z",
+  "hostname": "DESKTOP-ABC",
+  "count": 5,
+  "keystrokes": [
+    {"key": "h", "timestamp": "2025-10-13T14:23:45.100Z"},
+    {"key": "e", "timestamp": "2025-10-13T14:23:45.200Z"},
+    {"key": "l", "timestamp": "2025-10-13T14:23:45.300Z"},
+    {"key": "l", "timestamp": "2025-10-13T14:23:45.400Z"},
+    {"key": "o", "timestamp": "2025-10-13T14:23:45.500Z"}
+  ]
+}
+```
+
+Special keys are shown as: "space", "enter", "backspace", "shift", "ctrl", "alt", etc.
+
+## Testing
+
+1. **Start the updated server** from `ActivityLoggerServer_Deploy`
+2. **Start the updated client** from `ActivityLogger_Deploy`
+3. **Type something** in any application
+4. **Wait 5 seconds** (keystroke batch interval)
+5. **Open dashboard** and check Recent Events
+6. **Verify** you see keystroke sequences
+
+## Next Steps
+
+If you need to:
+- **Disable keystroke logging**: Revert to previous version that only logs counts
+- **Encrypt keystrokes**: Add encryption before sending to server
+- **Filter sensitive data**: Add password field detection to skip logging
+- **Adjust batch interval**: Edit `report_interval` parameter in client code
+
+## Build Information
+
+- Build Date: October 13, 2025
+- Client Version: ActivityLogger.exe (with keystroke capture)
+- Server Version: ActivityLoggerServer.exe (with app display + keystroke view)
+- PyInstaller: 6.16.0
+- Python: 3.13.8

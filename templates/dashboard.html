@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiego - Activity Monitor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .app-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .app-logo h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .app-logo-icon {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+        }
+        .stat-card h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        .stat-card p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+        .stat-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+        .device-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #e3f2fd;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 5px 5px 5px 0;
+        }
+        .event-item {
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .event-timestamp {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        .refresh-btn:hover {
+            transform: scale(1.1);
+        }
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .domain-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+        .filter-badge .btn-close {
+            --bs-btn-close-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+            filter: none;
+            opacity: 0.8;
+        }
+        .filter-badge .btn-close:hover {
+            opacity: 1;
+        }
+        #paginationControls {
+            font-size: 0.95rem;
+        }
+        #paginationControls .btn {
+            min-width: 40px;
+        }
+        .device-name {
+            cursor: pointer;
+            color: #667eea;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .device-name:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        .domain-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .domain-item:hover {
+            background: #f8f9fa;
+        }
+        .domain-count {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .filter-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="app-logo">
+                <i class="bi bi-eye app-logo-icon"></i>
+                <div>
+                    <h1>Spiego</h1>
+                    <small class="text-muted">Activity Monitoring Dashboard</small>
+                </div>
+            </div>
+            <div>
+                <span class="text-muted" id="lastUpdate">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <i class="bi bi-hdd-network stat-icon"></i>
+                    <h3 id="deviceCount">-</h3>
+                    <p>Total Devices</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <i class="bi bi-activity stat-icon"></i>
+                    <h3 id="activeDevices">-</h3>
+                    <p>Active (24h)</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <i class="bi bi-calendar-event stat-icon"></i>
+                    <h3 id="eventCount24h">-</h3>
+                    <p>Events (24h)</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <i class="bi bi-database stat-icon"></i>
+                    <h3 id="totalEvents">-</h3>
+                    <p>Total Events</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-card">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Filter by Device</label>
+                    <select id="hostnameFilter" class="form-select">
+                        <option value="">All Devices</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Time Range</label>
+                    <select id="timeRangeFilter" class="form-select">
+                        <option value="24">Last 24 Hours</option>
+                        <option value="48">Last 48 Hours</option>
+                        <option value="168">Last Week</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Event Type</label>
+                    <select id="eventTypeFilter" class="form-select">
+                        <option value="">All Events</option>
+                        <option value="foreground_change">Window Changes</option>
+                        <option value="mouse_idle">Mouse Idle</option>
+                        <option value="mouse_active">Mouse Active</option>
+                        <option value="key_count">Key Presses</option>
+                        <option value="metadata">Metadata</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Data -->
+        <div class="row">
+            <!-- Activity Timeline Chart -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-graph-up"></i> Activity Timeline</h5>
+                        <div class="chart-container">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Domains -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-globe"></i> Top Domains/Apps</h5>
+                        <div class="domain-list" id="domainList">
+                            <p class="text-muted text-center">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devices -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-laptop"></i> Registered Devices</h5>
+                        <div id="devicesList">
+                            <p class="text-muted">Loading devices...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-clock-history"></i> Recent Events
+                            <span id="appFilterBadge" class="badge bg-primary ms-2" style="display: none; cursor: pointer;" onclick="clearAppFilter()">
+                                Filtered by: App
+                                <i class="bi bi-x"></i>
+                            </span>
+                        </h5>
+                        <div id="recentEvents">
+                            <p class="text-muted">Loading events...</p>
+                        </div>
+                        <div id="paginationControls" class="d-flex justify-content-center align-items-center gap-2 mt-3" style="display: none;">
+                            <!-- Pagination controls will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Activity Modal -->
+    <div class="modal fade" id="deviceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-laptop"></i> <span id="modalDeviceName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="deviceModalBody">
+                    <p class="text-muted">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
+        <i class="bi bi-arrow-clockwise"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let timelineChart = null;
+
+        function formatTimestamp(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString();
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return 'N/A';
+            const gb = (bytes / (1024 ** 3)).toFixed(2);
+            return `${gb} GB`;
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                const data = await response.json();
+                document.getElementById('deviceCount').textContent = data.device_count;
+                document.getElementById('activeDevices').textContent = data.active_devices;
+                document.getElementById('eventCount24h').textContent = data.event_count_24h.toLocaleString();
+                document.getElementById('totalEvents').textContent = data.total_events.toLocaleString();
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadDevices() {
+            try {
+                const response = await fetch('/api/dashboard/devices');
+                const data = await response.json();
+                const devicesList = document.getElementById('devicesList');
+                const hostnameFilter = document.getElementById('hostnameFilter');
+                
+                // Update filter dropdown
+                hostnameFilter.innerHTML = '<option value="">All Devices</option>';
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.hostname;
+                    option.textContent = device.hostname;
+                    hostnameFilter.appendChild(option);
+                });
+
+                if (data.devices.length === 0) {
+                    devicesList.innerHTML = '<p class="text-muted">No devices registered yet.</p>';
+                    return;
+                }
+
+                let html = '<div class="row">';
+                data.devices.forEach(device => {
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6><i class="bi bi-laptop"></i> <a href="javascript:void(0)" class="device-name" onclick="showDeviceDetails('${device.hostname}')">${device.hostname}</a></h6>
+                                    <div class="device-badge">${device.platform}</div>
+                                    <div class="device-badge">Python ${device.python_version}</div>
+                                    <div class="device-badge">${device.cpu_count} CPUs</div>
+                                    <div class="device-badge">${formatBytes(device.memory_total)} RAM</div>
+                                    <p class="mt-2 mb-0 text-muted" style="font-size: 0.85rem;">
+                                        <i class="bi bi-clock"></i> Last seen: ${formatTimestamp(device.last_seen)}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                devicesList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading devices:', error);
+            }
+        }
+
+        async function loadTimeline() {
+            try {
+                const hours = document.getElementById('timeRangeFilter').value;
+                const hostname = document.getElementById('hostnameFilter').value;
+                const url = `/api/dashboard/activity_timeline?hours=${hours}${hostname ? '&hostname=' + hostname : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const labels = Object.keys(data.timeline).sort();
+                const datasets = {};
+
+                labels.forEach(hour => {
+                    Object.entries(data.timeline[hour]).forEach(([type, count]) => {
+                        if (!datasets[type]) {
+                            datasets[type] = {
+                                label: type,
+                                data: [],
+                                borderWidth: 2,
+                                fill: false
+                            };
+                        }
+                        datasets[type].data.push(count);
+                    });
+                });
+
+                // Fill missing data with 0
+                Object.values(datasets).forEach(dataset => {
+                    while (dataset.data.length < labels.length) {
+                        dataset.data.push(0);
+                    }
+                });
+
+                // Assign colors
+                const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#ffa07a'];
+                Object.values(datasets).forEach((dataset, idx) => {
+                    dataset.borderColor = colors[idx % colors.length];
+                    dataset.backgroundColor = colors[idx % colors.length] + '33';
+                });
+
+                if (timelineChart) {
+                    timelineChart.destroy();
+                }
+
+                const ctx = document.getElementById('timelineChart').getContext('2d');
+                timelineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: Object.values(datasets)
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+            }
+        }
+
+        async function loadTopDomains() {
+            try {
+                const hours = document.getElementById('timeRangeFilter').value;
+                const hostname = document.getElementById('hostnameFilter').value;
+                const url = `/api/dashboard/top_domains?limit=20&hours=${hours}${hostname ? '&hostname=' + hostname : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const domainList = document.getElementById('domainList');
+                if (data.domains.length === 0) {
+                    domainList.innerHTML = '<p class="text-muted text-center">No activity yet.</p>';
+                    return;
+                }
+
+                let html = '';
+                data.domains.forEach(item => {
+                    const isApp = item.type === 'app';
+                    const icon = isApp ? '🖥️' : '🌐';
+                    html += `
+                        <div class="domain-item" style="cursor: pointer; transition: background 0.2s;" 
+                             onmouseover="this.style.background='rgba(102, 126, 234, 0.1)'" 
+                             onmouseout="this.style.background='transparent'"
+                             onclick="filterByApp('${item.domain.replace(/'/g, "\\'")}')">
+                            <span class="text-truncate" style="max-width: 70%;" title="${item.domain}">
+                                ${icon} ${item.domain}
+                            </span>
+                            <span class="domain-count">${item.count}</span>
+                        </div>
+                    `;
+                });
+                domainList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading top domains:', error);
+            }
+        }
+
+        let currentAppFilter = null;
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function filterByApp(appName) {
+            // Toggle filter
+            if (currentAppFilter === appName) {
+                currentAppFilter = null;
+                document.getElementById('appFilterBadge').style.display = 'none';
+            } else {
+                currentAppFilter = appName;
+                document.getElementById('appFilterBadge').textContent = `Filtered by: ${appName}`;
+                document.getElementById('appFilterBadge').style.display = 'inline-block';
+            }
+            currentPage = 1; // Reset to first page
+            loadRecentEvents();
+        }
+
+        function clearAppFilter() {
+            currentAppFilter = null;
+            document.getElementById('appFilterBadge').style.display = 'none';
+            currentPage = 1;
+            loadRecentEvents();
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadRecentEvents();
+            // Scroll to events section
+            document.getElementById('recentEvents').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function loadRecentEvents() {
+            try {
+                const hostname = document.getElementById('hostnameFilter').value;
+                const eventType = document.getElementById('eventTypeFilter').value;
+                let url = `/api/dashboard/recent_events?limit=50&page=${currentPage}${hostname ? '&hostname=' + hostname : ''}${eventType ? '&type=' + eventType : ''}`;
+                
+                // Add app filter if active
+                if (currentAppFilter) {
+                    url += `&app=${encodeURIComponent(currentAppFilter)}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                totalPages = data.total_pages || 1;
+
+                const recentEvents = document.getElementById('recentEvents');
+                if (data.events.length === 0 && !currentAppFilter) {
+                    recentEvents.innerHTML = '<p class="text-muted">No events found.</p>';
+                    document.getElementById('paginationControls').style.display = 'none';
+                    return;
+                }
+
+                let html = '';
+                data.events.forEach(event => {
+                    let eventDetail = '';
+                    if (event.event_type === 'foreground_change') {
+                        eventDetail = `<strong>${event.data.title || 'Unknown'}</strong> (${event.data.process_name || 'N/A'})`;
+                        if (event.data.url) {
+                            eventDetail += `<br><small class="text-muted">${event.data.url}</small>`;
+                        }
+                    } else if (event.event_type === 'key_count') {
+                        eventDetail = `<strong>${event.data.count}</strong> keys pressed`;
+                        // Show keystrokes if available
+                        if (event.data.keystrokes && event.data.keystrokes.length > 0) {
+                            const keySequence = event.data.keystrokes.map(k => k.key).join(' ');
+                            eventDetail += `<br><small class="text-muted">Keys: ${keySequence}</small>`;
+                        }
+                    } else if (event.event_type === 'mouse_idle') {
+                        eventDetail = `Mouse idle for <strong>${Math.round(event.data.idle_seconds)}s</strong>`;
+                    } else if (event.event_type === 'mouse_active') {
+                        eventDetail = `Mouse active at (${event.data.x}, ${event.data.y})`;
+                    } else {
+                        eventDetail = `<pre class="mb-0" style="font-size: 0.85rem;">${JSON.stringify(event.data, null, 2)}</pre>`;
+                    }
+
+                    html += `
+                        <div class="event-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-primary me-2">${event.event_type}</span>
+                                    <span class="badge bg-secondary">${event.data.hostname || event.hostname}</span>
+                                    <div class="mt-2">${eventDetail}</div>
+                                </div>
+                                <span class="event-timestamp">${formatTimestamp(event.timestamp)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                recentEvents.innerHTML = html;
+                
+                // Update pagination controls
+                updatePaginationControls();
+            } catch (error) {
+                console.error('Error loading recent events:', error);
+            }
+        }
+
+        function updatePaginationControls() {
+            if (totalPages <= 1) {
+                document.getElementById('paginationControls').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('paginationControls').style.display = 'flex';
+            
+            let paginationHtml = '';
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            
+            // Previous button
+            paginationHtml += `
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="changePage(${currentPage - 1})" 
+                        ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            `;
+            
+            // First page
+            if (startPage > 1) {
+                paginationHtml += `
+                    <button class="btn btn-sm btn-outline-primary" onclick="changePage(1)">1</button>
+                `;
+                if (startPage > 2) {
+                    paginationHtml += `<span class="px-2">...</span>`;
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `
+                    <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}" 
+                            onclick="changePage(${i})">${i}</button>
+                `;
+            }
+            
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHtml += `<span class="px-2">...</span>`;
+                }
+                paginationHtml += `
+                    <button class="btn btn-sm btn-outline-primary" onclick="changePage(${totalPages})">${totalPages}</button>
+                `;
+            }
+            
+            // Next button
+            paginationHtml += `
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="changePage(${currentPage + 1})" 
+                        ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            `;
+            
+            document.getElementById('paginationControls').innerHTML = paginationHtml;
+        }
+
+        async function showDeviceDetails(hostname) {
+            try {
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('deviceModal'));
+                document.getElementById('modalDeviceName').textContent = hostname;
+                document.getElementById('deviceModalBody').innerHTML = '<p class="text-muted">Loading...</p>';
+                modal.show();
+
+                // Fetch device activity data
+                const response = await fetch(`/api/dashboard/device_activity?hostname=${encodeURIComponent(hostname)}`);
+                const data = await response.json();
+
+                let html = '';
+                
+                // Last active info
+                if (data.last_active) {
+                    html += `
+                        <div class="alert alert-info">
+                            <strong><i class="bi bi-clock-history"></i> Last Active:</strong> ${formatTimestamp(data.last_active)}
+                        </div>
+                    `;
+                }
+
+                // Mouse activity stats
+                html += `
+                    <h6 class="mb-3"><i class="bi bi-mouse"></i> Mouse Activity</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="text-success mb-0">${data.mouse_active_count || 0}</h3>
+                                    <small class="text-muted">Active Periods</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="text-warning mb-0">${data.mouse_idle_count || 0}</h3>
+                                    <small class="text-muted">Idle Periods</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Recent activity timeline
+                if (data.recent_activity && data.recent_activity.length > 0) {
+                    html += `
+                        <h6 class="mb-3"><i class="bi bi-activity"></i> Recent Activity (Last 24 Hours)</h6>
+                        <div class="list-group">
+                    `;
+                    
+                    data.recent_activity.forEach(event => {
+                        let icon = 'circle-fill';
+                        let color = 'secondary';
+                        let text = event.type;
+                        
+                        if (event.type === 'mouse_active') {
+                            icon = 'mouse';
+                            color = 'success';
+                            text = 'Mouse Active';
+                        } else if (event.type === 'mouse_idle') {
+                            icon = 'pause-circle';
+                            color = 'warning';
+                            text = 'Mouse Idle';
+                        } else if (event.type === 'domain_visit') {
+                            icon = 'globe';
+                            color = 'primary';
+                            text = `Visited: ${event.url || 'Unknown'}`;
+                        } else if (event.type === 'keystroke') {
+                            icon = 'keyboard';
+                            color = 'info';
+                            text = 'Keystroke Activity';
+                        }
+                        
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="bi bi-${icon} text-${color} me-2"></i>
+                                        <strong>${text}</strong>
+                                        ${event.process_name ? `<br><small class="text-muted ms-4">${event.process_name}</small>` : ''}
+                                    </div>
+                                    <small class="text-muted">${formatTimestamp(event.timestamp)}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                } else {
+                    html += `<p class="text-muted">No recent activity found.</p>`;
+                }
+
+                document.getElementById('deviceModalBody').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading device details:', error);
+                document.getElementById('deviceModalBody').innerHTML = '<p class="text-danger">Error loading device details.</p>';
+            }
+        }
+
+        async function loadDashboard() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('spinning');
+            
+            await Promise.all([
+                loadStats(),
+                loadDevices(),
+                loadTimeline(),
+                loadTopDomains(),
+                loadRecentEvents()
+            ]);
+
+            document.getElementById('lastUpdate').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+            btn.classList.remove('spinning');
+        }
+
+        // Event listeners for filters
+        document.getElementById('hostnameFilter').addEventListener('change', () => {
+            loadTimeline();
+            loadTopDomains();
+            loadRecentEvents();
+        });
+
+        document.getElementById('timeRangeFilter').addEventListener('change', () => {
+            loadTimeline();
+            loadTopDomains();
+        });
+
+        document.getElementById('eventTypeFilter').addEventListener('change', () => {
+            loadRecentEvents();
+        });
+
+        // Initial load
+        loadDashboard();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

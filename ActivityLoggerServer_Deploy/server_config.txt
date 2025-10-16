@@ -1,0 +1,4 @@
+AUTH_KEY=your-secret-auth-key-change-me
+HOST=0.0.0.0
+PORT=5000
+LICENSE_KEY=spiegoishugo

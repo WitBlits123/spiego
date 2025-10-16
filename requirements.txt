@@ -1,0 +1,14 @@
+# Client dependencies
+psutil>=5.9.0
+pywin32>=305
+pynput>=1.7.6
+uiautomation>=1.0.2
+requests>=2.31.0
+
+# System tray dependencies
+pystray>=0.19.0
+pillow>=10.0.0
+
+# Server dependencies
+flask>=2.3.0
+

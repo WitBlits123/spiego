@@ -1,0 +1,42 @@
+# Activity Logger Configuration
+# Copy this file to config.ini and customize for your environment
+
+[Server]
+# Server endpoint to send activity logs
+# For local testing: 127.0.0.1
+# For production: your-server-ip or domain
+host = 127.0.0.1
+port = 5000
+
+# Enable SSL/HTTPS for production
+# Requires server to have valid SSL certificate
+use_ssl = false
+
+[Security]
+# Authentication key for API access
+# CHANGE THIS TO A STRONG RANDOM VALUE!
+# Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+auth_key = your-secret-auth-key-change-me
+
+[Logging]
+# Local fallback file if server is unavailable
+# Events will be saved here and you can upload them later
+fallback_file = activity_log_fallback.jsonl
+
+# Send interval in seconds (batch events before sending)
+# Lower = more real-time but more network calls
+# Higher = less network traffic but delayed reporting
+send_interval = 5
+
+# Number of retry attempts if server fails
+# Recommended: 3-5 for reliable delivery
+retry_attempts = 3
+
+# Idle threshold for mouse (seconds)
+# How long before mouse is considered "idle"
+idle_threshold = 60
+
+# Polling interval for foreground window checks (seconds)
+# Lower = more accurate but higher CPU usage
+# Higher = less CPU but may miss quick window switches
+poll_interval = 1.0

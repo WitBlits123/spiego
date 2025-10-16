@@ -1,0 +1,260 @@
+# Activity Logger - Complete Deployment Package
+
+## Overview
+
+Two deployment folders have been created:
+1. **ActivityLogger_Deploy** - Client application (logs activity and sends to server)
+2. **ActivityLoggerServer_Deploy** - Server application (receives logs and provides web dashboard)
+
+---
+
+## Server Setup (ActivityLoggerServer_Deploy)
+
+### What's Included
+- `ActivityLoggerServer.exe` - Server application with system tray
+- `START_SERVER.bat` - Quick start script
+- `server_config.txt` - Configuration file
+- `templates/` - Web dashboard templates
+- `README.txt` - Full server documentation
+
+### Setup Steps
+1. **Edit `server_config.txt`**
+   ```
+   AUTH_KEY=your-secret-auth-key-change-me
+   HOST=0.0.0.0
+   PORT=5000
+   ```
+   - Set a strong AUTH_KEY (clients need this same key)
+   - HOST=0.0.0.0 means accept connections from any network interface
+   - PORT=5000 is the default web port
+
+2. **Start the Server**
+   - Double-click `START_SERVER.bat`
+   - Server runs in system tray (green circle with 'S')
+   - No console window
+
+3. **Open Dashboard**
+   - Right-click tray icon → Open Dashboard
+   - Or browse to `http://localhost:5000`
+
+### System Tray Features
+- **View Status** - Shows uptime, total events, active devices
+- **Open Dashboard** - Opens web interface in browser
+
+---
+
+## Client Setup (ActivityLogger_Deploy)
+
+### What's Included
+- `ActivityLogger.exe` - Client application with system tray
+- `config.ini` - Configuration file
+- `README.txt` - Full client documentation
+
+### Setup Steps
+1. **Edit `config.ini`**
+   ```ini
+   [Server]
+   host = YOUR-SERVER-IP-HERE
+   port = 5000
+   use_ssl = false
+
+   [Security]
+   auth_key = your-secret-auth-key-change-me
+   ```
+   - Set `host` to your server's IP address
+   - Set `auth_key` to match the server's AUTH_KEY
+
+2. **Start the Client**
+   - Double-click `ActivityLogger.exe`
+   - Runs in system tray (green circle with 'A')
+   - No console window
+
+### System Tray Features
+- **View Status** - Shows logging statistics
+
+---
+
+## Network Configuration
+
+### Firewall (Server)
+Allow port 5000 through Windows Firewall:
+```powershell
+netsh advfirewall firewall add rule name="Activity Logger Server" dir=in action=allow protocol=TCP localport=5000
+```
+
+### Testing Connection
+From client machine, test connectivity:
+```powershell
+Test-NetConnection SERVER-IP -Port 5000
+```
+
+---
+
+## Deployment Checklist
+
+### Server Machine
+- [ ] Copy `ActivityLoggerServer_Deploy` folder to server
+- [ ] Edit `server_config.txt` with strong AUTH_KEY
+- [ ] Configure firewall to allow port 5000
+- [ ] Run `START_SERVER.bat`
+- [ ] Verify green 'S' icon appears in system tray
+- [ ] Test dashboard opens at `http://localhost:5000`
+
+### Client Machines
+- [ ] Copy `ActivityLogger_Deploy` folder to each client
+- [ ] Edit `config.ini` with server IP and matching AUTH_KEY
+- [ ] Run `ActivityLogger.exe`
+- [ ] Verify green 'A' icon appears in system tray
+- [ ] Check server dashboard shows device activity
+
+---
+
+## What Gets Logged
+
+### Device Metadata
+- Hostname
+- Platform (Windows, Linux, etc.)
+- Python version
+- CPU count
+- Memory total
+- MAC addresses
+
+### Activity Events
+1. **Foreground Window Changes**
+   - Window title
+   - Process name
+   - Browser URLs (when available)
+
+2. **Mouse Activity**
+   - Mouse active (movement detected)
+   - Mouse idle (no movement for X seconds)
+
+3. **Keyboard Activity**
+   - Key press counts (NOT actual keystrokes - privacy safe)
+
+---
+
+## Security Features
+
+✓ **Bearer Token Authentication** - All API requests require valid auth key
+✓ **No Raw Keystroke Logging** - Only counts are logged, not actual keys pressed
+✓ **Safe Browser URLs** - Only extracts URLs from active browser windows
+✓ **Local Fallback** - If server unavailable, logs to local file
+✓ **No Console Windows** - Runs silently in system tray
+
+---
+
+## Dashboard Features
+
+### Stats Cards
+- Total events received
+- Active devices (last 5 minutes)
+- Events by type breakdown
+
+### Filters
+- Filter by device hostname
+- Filter by time range (1h, 6h, 24h, 7d)
+- Filter by event type
+
+### Visualizations
+- Activity timeline chart (events per hour)
+- Top domains visited
+- Recent events table
+
+### Auto-Refresh
+- Dashboard auto-refreshes every 30 seconds
+- Shows real-time activity
+
+---
+
+## File Locations
+
+### Server
+- Database: `activity_logs.db` (created automatically in server folder)
+- Templates: `templates/dashboard.html` (embedded in EXE)
+
+### Client
+- Fallback logs: `activity_fallback.jsonl` (only if server unavailable)
+- Config: `config.ini`
+
+---
+
+## Troubleshooting
+
+### Server Issues
+**Problem:** Server won't start
+- Check port 5000 isn't already in use
+- Try different port in `server_config.txt`
+
+**Problem:** Dashboard shows no data
+- Check clients are running
+- Verify AUTH_KEY matches between server and clients
+- Right-click server tray icon → View Status
+
+### Client Issues
+**Problem:** Can't connect to server
+- Verify server IP is correct in `config.ini`
+- Check firewall allows port 5000
+- Test with `Test-NetConnection SERVER-IP -Port 5000`
+
+**Problem:** No tray icon appears
+- Check Windows notification area settings
+- Look for hidden icons (click ^ on taskbar)
+
+---
+
+## Production Recommendations
+
+1. **Strong Auth Key**
+   - Use a long, random string for AUTH_KEY
+   - Example: `openssl rand -base64 32`
+
+2. **HTTPS/SSL**
+   - For production, use a reverse proxy (nginx/Apache) with SSL
+   - Set `use_ssl = true` in client `config.ini`
+
+3. **Database Backups**
+   - Regularly backup `activity_logs.db`
+   - Can use SQLite tools or simple file copy
+
+4. **Monitoring**
+   - Check server tray status regularly
+   - Monitor database file size
+   - Review dashboard for anomalies
+
+5. **Network Security**
+   - Use VPN or private network if possible
+   - Restrict server to specific IP ranges
+   - Consider changing default port 5000
+
+---
+
+## System Requirements
+
+### Server
+- Windows 10/11 (or Windows Server 2016+)
+- 1GB RAM minimum
+- 100MB disk space + log storage
+- Network access for clients
+
+### Client
+- Windows 10/11
+- 512MB RAM minimum
+- 50MB disk space
+- Network access to server
+
+---
+
+## Support & Maintenance
+
+### Clearing Data
+Server: Delete `activity_logs.db` file
+Client: Delete `activity_fallback.jsonl` file (if exists)
+
+### Updates
+Replace EXE files in deployment folders
+Preserve configuration files (`config.ini`, `server_config.txt`)
+
+### Logs
+Both applications run silently
+Check system tray status for health information

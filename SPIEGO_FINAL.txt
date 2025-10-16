@@ -1,0 +1,160 @@
+# Spiego - Final Build Update
+
+## ✅ What's New
+
+### 🎨 Branding
+- **Application name**: Now branded as "Spiego"
+- **Dashboard header**: Eye icon with "Spiego" title
+- **Subtitle**: "Activity Monitoring Dashboard"
+- **Color scheme**: Purple gradient (maintained)
+
+### 🖱️ Clickable App/Domain Filtering
+- **Click on any app or domain** in "Top Domains/Apps" list
+- **Filters Recent Events** to show only events from that app/domain
+- **Visual feedback**: Items highlight on hover
+- **Active filter badge**: Shows which app is currently filtered
+- **Click badge or app again** to clear filter
+
+### 🏷️ App Icons
+- **🖥️ Icon** for applications (chrome.exe, code.exe)
+- **🌐 Icon** for domains (youtube.com, github.com)
+
+### 📊 Enhanced Display
+- Applications prioritized in Top Domains/Apps
+- Shows both process names AND URLs
+- Better visual hierarchy
+
+## 🎯 How It Works
+
+### Filtering by App/Domain
+
+1. **View Top Apps**: Look at "Top Domains/Apps" section
+2. **Click an app**: Click on `chrome.exe` for example
+3. **See filtered events**: Recent Events now shows only chrome.exe events
+4. **See the badge**: "Filtered by: chrome.exe" appears above Recent Events
+5. **Clear filter**: Click the badge or click the app again
+
+### Example Workflow
+
+```
+Top Domains/Apps:
+🖥️ chrome.exe      125  ← Click this
+🖥️ code.exe         87
+🖥️ explorer.exe     42
+🌐 youtube.com      38
+```
+
+↓ After clicking chrome.exe ↓
+
+```
+Recent Events
+[Filtered by: chrome.exe ×]
+
+foreground_change | DESKTOP-ABC
+Armin van Buuren - This Is A Test - YouTube - Google Chrome (chrome.exe)
+youtube.com/watch?v=fIrrHUaXpAE
+
+key_count | DESKTOP-ABC
+15 keys pressed
+Keys: h e l l o space w o r l d
+
+... only chrome.exe events shown ...
+```
+
+## 📁 Files Updated
+
+### Server (dist/ActivityLoggerServer.exe)
+✅ Spiego branding in dashboard
+✅ Clickable app/domain filtering
+✅ App filter API parameter support
+✅ Icons for apps vs domains
+
+### Templates (templates/dashboard.html)
+✅ New header with Spiego logo
+✅ Click handlers for filtering
+✅ Filter badge with clear button
+✅ Hover effects on app items
+✅ Icons differentiation
+
+## 🚀 Deployment
+
+### Copy Updated Server:
+```powershell
+# Stop current server first (close tray icon or Task Manager)
+Copy-Item "C:\WebSites\HugoApp\dist\ActivityLoggerServer.exe" "C:\WebSites\HugoApp\ActivityLoggerServer_Deploy\" -Force
+
+# Start server
+cd C:\WebSites\HugoApp\ActivityLoggerServer_Deploy
+.\START_SERVER.bat
+```
+
+## 🎨 Visual Changes
+
+### Before:
+```
+Activity Monitor Dashboard
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Top Domains/Apps:
+chrome.exe      125
+code.exe         87
+```
+
+### After:
+```
+👁️ Spiego
+   Activity Monitoring Dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Top Domains/Apps:
+🖥️ chrome.exe      125  (clickable)
+🖥️ code.exe         87  (clickable)
+```
+
+## 🔍 Features Summary
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Spiego Branding | ✅ | App name displayed prominently |
+| Clickable Filtering | ✅ | Click apps to filter events |
+| App/Domain Icons | ✅ | Visual distinction |
+| Filter Badge | ✅ | Shows active filter |
+| Hover Effects | ✅ | Visual feedback |
+| Clear Filter | ✅ | Click badge to clear |
+| Keystroke Logging | ✅ | Full keystroke sequences |
+| Top Apps Display | ✅ | Process names prioritized |
+
+## 🔐 Security Reminder
+
+⚠️ **This version logs actual keystrokes!**
+- All key presses are recorded in sequence
+- Timestamps for each keystroke
+- Visible in dashboard Recent Events
+- Stored in SQLite database
+
+**Ensure proper authorization and security:**
+- Strong AUTH_KEY in config
+- Secure network access
+- Regular security audits
+- User notification required
+
+## 📝 Build Information
+
+- **Build Date**: October 13, 2025
+- **App Name**: Spiego
+- **Version**: 1.0 (with keystroke logging & filtering)
+- **Server**: ActivityLoggerServer.exe
+- **Client**: ActivityLogger.exe
+- **Python**: 3.13.8
+- **PyInstaller**: 6.16.0
+
+## 🎉 Ready to Use!
+
+Your Spiego activity monitoring system is now complete with:
+- Professional branding
+- Interactive filtering
+- Full keystroke logging
+- Beautiful modern UI
+- System tray operation
+
+Just stop and restart your server to see the updates!
